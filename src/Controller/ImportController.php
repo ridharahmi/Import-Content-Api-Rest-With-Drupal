@@ -17,7 +17,7 @@ class ImportController extends ControllerBase
     public function content()
     {
         $client = \Drupal::httpClient();
-        $url = 'http://deploy:deploy_bitbucket_2017@investia-intra.elyosdigital.com/api/pme/passed';
+        $url = 'http://api.example.com/posts/';
         try {
             $response = $client->get($url);
             $data = $response->getBody();
