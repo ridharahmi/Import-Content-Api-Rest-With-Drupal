@@ -1,0 +1,5 @@
+import_content.content:
+  title: 'Import Content With Api Rest'
+  description: 'Import Content With Api Rest Drupal 8.'
+  parent: system.admin_config_ui
+  route_name: import_content.content

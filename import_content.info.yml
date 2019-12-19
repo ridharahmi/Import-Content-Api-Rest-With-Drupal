@@ -1,0 +1,6 @@
+name: 'Import Content With Drupal 8'
+description: 'This Is Custom Module Import Content With Drupal 8'
+package: Custom
+type: module
+core: 8.x
+version: 8.x

@@ -1,0 +1,7 @@
+import_content.content:
+  path: '/import-custom-content'
+  defaults:
+    _controller: '\Drupal\import_content\Controller\ImportController::content'
+    _title: 'Import Content'
+  requirements:
+    _permission: 'access content'
