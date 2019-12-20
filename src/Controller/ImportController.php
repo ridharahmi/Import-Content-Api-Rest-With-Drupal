@@ -6,6 +6,7 @@ namespace Drupal\import_content\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use GuzzleHttp\Exception\RequestException;
 use Drupal\node\Entity\Node;
+use \Drupal\file\Entity\File;
 
 class ImportController extends ControllerBase
 {
@@ -17,7 +18,7 @@ class ImportController extends ControllerBase
     public function content()
     {
         $client = \Drupal::httpClient();
-        $url = 'http://api.example.com/posts/';
+        $url = 'http://exemple.com/api';
         try {
             $response = $client->get($url);
             $data = $response->getBody();
@@ -26,18 +27,37 @@ class ImportController extends ControllerBase
             foreach ($response->data as $items) {
                 $nid = $this->isItemExiste($items['id']);
                 $id = reset($nid);
+                if (!$items['logo']) {
+                    $items['logo'] = file_create_url(drupal_get_path('module', 'import_content') . '/assets/img/logo.png');
+                }
+                $uri = $items['logo'];
+                $file = $this->prepareImageObj($uri);
+
                 if ($id) {
                     $node = Node::load($id);
                     $node->title = $items['raison_soc'];
-                    $node->field_image_enterprise = $items['logo'];
+                    $node->field_image_enterprise = [
+                        'value' => $items['logo'],
+                    ];
+                    $node->field_logo[] = [
+                        'target_id' => $file->id(),
+                        'alt' => $items['raison_soc'],
+                        'title' => $items['raison_soc'],
+                    ];
+
                     $node->save();
-                }else{
+                } else {
                     $node = Node::create([
                         'type' => 'enterprise',
                         'field_index' => $items['id'],
                         'title' => $items['raison_soc'],
                         'field_image_enterprise' => [
                             'value' => $items['logo'],
+                        ],
+                        'field_logo' => [
+                            'target_id' => $file->id(),
+                            'alt' => $items['raison_soc'],
+                            'title' => $items['raison_soc'],
                         ],
                         'moderation_state' => [
                             'target_id' => 'published',
@@ -66,6 +86,25 @@ class ImportController extends ControllerBase
         return $nids;
     }
 
+    /**
+     * {@inheritdoc}
+     */
+    private function prepareImageObj($url)
+    {
+        $files = \Drupal::entityTypeManager()
+            ->getStorage('file')
+            ->loadByProperties(['uri' => $url]);
+        $file = reset($files);
+
+        // if not create a file
+        if (!$file) {
+            $file = File::create([
+                'uri' => $url,
+            ]);
+            $file->save();
+        }
+        return $file;
+    }
 
 }
 
