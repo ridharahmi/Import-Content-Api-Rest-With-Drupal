@@ -18,7 +18,7 @@ class ImportController extends ControllerBase
     public function content()
     {
         $client = \Drupal::httpClient();
-        $url = 'http://exemple.com/api';
+        $url = 'http://www.exemple.com/api';
         try {
             $response = $client->get($url);
             $data = $response->getBody();
@@ -27,46 +27,15 @@ class ImportController extends ControllerBase
             foreach ($response->data as $items) {
                 $nid = $this->isItemExiste($items['id']);
                 $id = reset($nid);
+
                 if (!$items['logo']) {
                     $items['logo'] = file_create_url(drupal_get_path('module', 'import_content') . '/assets/img/logo.png');
                 }
-                $uri = $items['logo'];
-                $file = $this->prepareImageObj($uri);
 
                 if ($id) {
-                    $node = Node::load($id);
-                    $node->title = $items['raison_soc'];
-                    $node->field_image_enterprise = [
-                        'value' => $items['logo'],
-                    ];
-                    $node->field_logo[] = [
-                        'target_id' => $file->id(),
-                        'alt' => $items['raison_soc'],
-                        'title' => $items['raison_soc'],
-                    ];
-
-                    $node->save();
+                    $this->updateItem($items, $id);
                 } else {
-                    $node = Node::create([
-                        'type' => 'enterprise',
-                        'field_index' => $items['id'],
-                        'title' => $items['raison_soc'],
-                        'field_image_enterprise' => [
-                            'value' => $items['logo'],
-                        ],
-                        'field_logo' => [
-                            'target_id' => $file->id(),
-                            'alt' => $items['raison_soc'],
-                            'title' => $items['raison_soc'],
-                        ],
-                        'moderation_state' => [
-                            'target_id' => 'published',
-                        ],
-                        'uid' => 1,
-                        'langcode' => 'en',
-                        'status' => 1,
-                    ]);
-                    $node->save();
+                    $this->addItem($items);
                 }
             }
         } catch (RequestException $e) {
@@ -106,5 +75,56 @@ class ImportController extends ControllerBase
         return $file;
     }
 
+    /**
+     * {@inheritdoc}
+     */
+    private function addItem($items)
+    {
+        $uri = $items['logo'];
+        $file = $this->prepareImageObj($uri);
+        $node = Node::create([
+            'type' => 'enterprise',
+            'field_index' => $items['id'],
+            'title' => $items['raison_soc'],
+            'field_image_enterprise' => [
+                'value' => $items['logo'],
+            ],
+            'field_logo' => [
+                'target_id' => $file->id(),
+                'alt' => $items['raison_soc'],
+                'title' => $items['raison_soc'],
+                'width' => '100'
+            ],
+            'moderation_state' => [
+                'target_id' => 'published',
+            ],
+            'uid' => 1,
+            'langcode' => 'en',
+            'status' => 1,
+        ]);
+        $node->save();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    private function updateItem($items, $id)
+    {
+        $uri = $items['logo'];
+        $file = $this->prepareImageObj($uri);
+        $node = Node::load($id);
+        $node->title = $items['raison_soc'];
+        $node->field_image_enterprise = [
+            'value' => $items['logo'],
+        ];
+        $node->field_logo[] = [
+            'target_id' => $file->id(),
+            'alt' => $items['raison_soc'],
+            'title' => $items['raison_soc'],
+            'width' => '100'
+        ];
+
+        $node->save();
+    }
 }
 
